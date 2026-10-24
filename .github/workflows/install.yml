@@ -40,6 +40,21 @@ jobs:
           scoop bucket add opensec-git $bucket
           if ($LASTEXITCODE) { exit $LASTEXITCODE }
           if (-not (scoop bucket list | Where-Object Name -eq 'opensec-git')) { Write-Error 'the bucket was not added'; exit 1 }
+      - name: Check autoupdate
+        run: |
+          # checkver -ForceUpdate rebuilds the manifest from its autoupdate rules (the release's URL, the hash from its
+          # SHA256SUMS), as Excavator does for a new release: it must give the same URL and hash.
+          $env:SCOOP_HOME = Convert-Path (scoop prefix scoop)
+          $before = Get-Content my_bucket\bucket\pi-bolt.json -Raw | ConvertFrom-Json
+          .\my_bucket\bin\checkver.ps1 pi-bolt -ForceUpdate
+          $after = Get-Content my_bucket\bucket\pi-bolt.json -Raw | ConvertFrom-Json
+          foreach ($field in 'url', 'hash', 'extract_dir') {
+            $was = $before.architecture.'64bit'.$field
+            $now = $after.architecture.'64bit'.$field
+            Write-Output "$field`: $now"
+            if ($was -ne $now) { Write-Error "autoupdate gives $field '$now', the manifest has '$was'"; exit 1 }
+          }
+          git -C my_bucket checkout -- bucket/pi-bolt.json
       - name: Install pi-bolt
         run: |
           scoop install opensec-git/pi-bolt
