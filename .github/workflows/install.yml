@@ -1,0 +1,60 @@
+name: Install
+
+# Installs each manifest from this commit of the bucket with Scoop, on a clean Windows runner, and runs it.
+
+on:
+  push:
+    branches:
+      - 'main'
+  pull_request:
+  workflow_dispatch:
+  schedule:
+    # Daily: Excavator's commits are pushed with GITHUB_TOKEN, which starts no workflow.
+    - cron: '40 6 * * *'
+
+permissions:
+  contents: read
+
+jobs:
+  install:
+    name: Install pi-bolt
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - name: Checkout Bucket
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          path: 'my_bucket'
+      - name: Install Scoop
+        run: |
+          Invoke-RestMethod -Uri https://get.scoop.sh -OutFile install-scoop.ps1
+          .\install-scoop.ps1 -RunAsAdmin
+          "$env:USERPROFILE\scoop\shims" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+      - name: Add this bucket
+        run: |
+          scoop bucket add opensec-git "$env:GITHUB_WORKSPACE\my_bucket"
+          scoop bucket list
+      - name: Install pi-bolt
+        run: |
+          scoop install opensec-git/pi-bolt
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          scoop info pi-bolt
+      - name: Run pi-bolt
+        run: |
+          $manifest = Get-Content my_bucket\bucket\pi-bolt.json -Raw | ConvertFrom-Json
+          $out = pi-bolt --version
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          Write-Output $out
+          if ("$out" -notmatch "Pi-Bolt $([regex]::Escape($manifest.version)),") {
+            Write-Error "pi-bolt --version printed '$out', expected Pi-Bolt $($manifest.version)"
+            exit 1
+          }
+          (Get-Command pi-bolt).Source
+      - name: Uninstall pi-bolt
+        run: |
+          scoop uninstall pi-bolt
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          if (Get-Command pi-bolt -ErrorAction SilentlyContinue) { Write-Error 'pi-bolt is still on PATH'; exit 1 }

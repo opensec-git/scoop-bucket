@@ -1,42 +1,44 @@
-# Scoop Bucket Template
+# OpenSec Scoop bucket
 
-<!-- Uncomment the following line after replacing placeholders -->
-<!-- [![Tests](https://github.com/<username>/<bucketname>/actions/workflows/ci.yml/badge.svg)](https://github.com/<username>/<bucketname>/actions/workflows/ci.yml) [![Excavator](https://github.com/<username>/<bucketname>/actions/workflows/excavator.yml/badge.svg)](https://github.com/<username>/<bucketname>/actions/workflows/excavator.yml) -->
+[![Tests](https://github.com/opensec-git/scoop-bucket/actions/workflows/ci.yml/badge.svg)](https://github.com/opensec-git/scoop-bucket/actions/workflows/ci.yml) [![Install](https://github.com/opensec-git/scoop-bucket/actions/workflows/install.yml/badge.svg)](https://github.com/opensec-git/scoop-bucket/actions/workflows/install.yml) [![Excavator](https://github.com/opensec-git/scoop-bucket/actions/workflows/excavator.yml/badge.svg)](https://github.com/opensec-git/scoop-bucket/actions/workflows/excavator.yml)
 
-Template bucket for [Scoop](https://scoop.sh), the Windows command-line installer.
+[Scoop](https://scoop.sh) manifests for [Pi-Bolt](https://github.com/opensec-git/Pi-Bolt), the Pi coding agent compiled ahead
+of time to native code.
 
-## How do I use this template?
-
-1. Generate your own copy of this repository with the "Use this template"
-   button.
-2. Allow all GitHub Actions:
-   - Navigate to `Settings` - `Actions` - `General` - `Actions permissions`.
-   - Select `Allow all actions and reusable workflows`.
-   - Then `Save`.
-3. Workflow permissions:
-   - Navigate to `Settings` - `Actions` - `General` - `Workflow permissions`.
-   - Ensure `Read repository contents and packages permissions` is selected.
-   - Then `Save`.
-4. Document the bucket in `README.md`.
-5. Replace the placeholder repository string in `bin/auto-pr.ps1`.
-6. Create new manifests by copying `bucket/app-name.json.template` to
-   `bucket/<app-name>.json`.
-7. Commit and push changes.
-8. If you'd like your bucket to be indexed on `https://scoop.sh`, add the
-   topic `scoop-bucket` to your repository.
-
-## How do I install these manifests?
-
-After manifests have been committed and pushed, run the following:
+## Install
 
 ```pwsh
-scoop bucket add <bucketname> https://github.com/<username>/<bucketname>
-scoop install <bucketname>/<manifestname>
+scoop bucket add opensec-git https://github.com/opensec-git/scoop-bucket
+scoop install opensec-git/pi-bolt
 ```
 
-## How do I contribute new manifests?
+This installs the latest Pi-Bolt release for Windows x64 (`pi-bolt-win32-x64.zip`) and puts `pi-bolt` on PATH.
 
-To make a new manifest contribution, please read the [Contributing
-Guide](https://github.com/ScoopInstaller/.github/blob/main/.github/CONTRIBUTING.md)
-and [App Manifests](https://github.com/ScoopInstaller/Scoop/wiki/App-Manifests)
-wiki page.
+## Upgrade
+
+```pwsh
+scoop update pi-bolt
+```
+
+`pi-bolt update` does not replace a Scoop installation: it tells you to run `scoop update pi-bolt`.
+
+## Uninstall
+
+```pwsh
+scoop uninstall pi-bolt
+scoop bucket rm opensec-git
+```
+
+Your sessions and settings in `~\.pi` stay.
+
+## Other ways to install
+
+The Windows installer (`irm https://pi-bolt.opensec.in/install.ps1 | iex`) and the npm package are described in
+[Pi-Bolt's installation guide](https://pi-bolt.opensec.in/docs/installation.html). The installer also offers the JIT build,
+which this manifest does not.
+
+## How the manifest is updated
+
+The Excavator workflow runs every four hours. It reads the latest `bolt-vX.Y.Z` release of Pi-Bolt, takes the archive's SHA-256
+from the release's `SHA256SUMS`, and commits the new version to `bucket/pi-bolt.json`. The Install workflow installs the manifest
+with Scoop on a Windows runner and runs `pi-bolt --version`, on every push and pull request and once a day.

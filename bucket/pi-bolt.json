@@ -1,0 +1,31 @@
+{
+    "version": "1.0.0",
+    "description": "Pi coding agent, compiled ahead of time to native code",
+    "homepage": "https://pi-bolt.opensec.in",
+    "license": "MIT",
+    "notes": "Update with 'scoop update pi-bolt'. Sessions and settings are in ~\\.pi and stay when Pi-Bolt is uninstalled.",
+    "architecture": {
+        "64bit": {
+            "url": "https://github.com/opensec-git/Pi-Bolt/releases/download/bolt-v1.0.0/pi-bolt-win32-x64.zip",
+            "hash": "bc02b618a7264aa444d79f29e02b4fdefea14061761ed6ca846a0a137ab9425e",
+            "extract_dir": "pi-bolt-win32-x64"
+        }
+    },
+    "bin": "pi-bolt.exe",
+    "checkver": {
+        "github": "https://github.com/opensec-git/Pi-Bolt",
+        "regex": "bolt-v([\\d.]+)"
+    },
+    "autoupdate": {
+        "architecture": {
+            "64bit": {
+                "url": "https://github.com/opensec-git/Pi-Bolt/releases/download/bolt-v$version/pi-bolt-win32-x64.zip",
+                "extract_dir": "pi-bolt-win32-x64"
+            }
+        },
+        "hash": {
+            "url": "https://github.com/opensec-git/Pi-Bolt/releases/download/bolt-v$version/SHA256SUMS",
+            "regex": "$sha256\\s+\\*?$basename"
+        }
+    }
+}
