@@ -35,8 +35,11 @@ jobs:
           "$env:USERPROFILE\scoop\shims" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
       - name: Add this bucket
         run: |
-          scoop bucket add opensec-git "$env:GITHUB_WORKSPACE\my_bucket"
-          scoop bucket list
+          # (Scoop clones a bucket with git: the checkout, as a file:// URL, is this commit.)
+          $bucket = 'file:///' + ("$env:GITHUB_WORKSPACE\my_bucket" -replace '\\', '/')
+          scoop bucket add opensec-git $bucket
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          if (-not (scoop bucket list | Where-Object Name -eq 'opensec-git')) { Write-Error 'the bucket was not added'; exit 1 }
       - name: Install pi-bolt
         run: |
           scoop install opensec-git/pi-bolt
